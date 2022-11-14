@@ -1,0 +1,8 @@
+spec: v1.0
+desc: A test catalog for checking the catalog installation.
+
+localDependencies:
+  - dir1
+  - dir2
+
+jobs: []

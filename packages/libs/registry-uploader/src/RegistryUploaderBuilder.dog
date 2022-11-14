@@ -1,0 +1,34 @@
+use (
+  RegistryUploader
+)
+
+/**
+ * A factory to create registry uploader instances.
+ */
+export struct RegistryUploaderBuilder
+  /**
+   * Creates a registry uploader from an uploader declaration.
+   */
+  pub fn create(decl: map) -> uploader: RegistryUploader
+    # (1) get the connector to use
+    var conn
+
+    #!cov ignore else
+    with kind ::= decl.impl do
+      if "skynet" then conn = createSkynetConnector(decl)
+      else throw(TypeError($"Unknown connector: ${kind}."))
+    
+    # (2) create registry to return
+    uploader = RegistryUploader(decl{*, client = conn})
+
+/**
+ * Creates a Skynet connector.
+ */
+fn createSkynetConnector(decl: map) -> conn
+  const (
+    {SkynetClient} = use("@skynetlabs/skynet-nodejs")
+    portal = $"https://${decl.portal}"
+    client = native("new SkynetClient(portal)")
+  )
+
+  conn = use("./impl/skynet/SkynetConnector")(decl{*, client})

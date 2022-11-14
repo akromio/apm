@@ -1,0 +1,59 @@
+{
+  "name": "@akromio/apm",
+  "version": "0.0.0",
+  "description": "Akromio package manager CLI.",
+  "years": "2022",
+  "author": {
+    "name": "Sia Codelabs",
+    "email": "hello@siacodelabs.com",
+    "url": "https://siacodelabs.com"
+  },
+  "keywords": [
+    "package manager"
+  ],
+  "bugs": {
+    "url": "https://github.com/akromio/nodejs-apm/issues",
+    "email": "bugs@akromio.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akromio/nodejs-apm.git"
+  },
+  "preferGlobal": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "commonjs",
+  "bin": {
+    "apm": "./dist/cjs/apm.js"
+  },
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">= 14",
+    "npm": ">= 6"
+  },
+  "dependencies": {
+    "@akromio/catalog-installer": "^0.0.0",
+    "@akromio/cli": "^0.1.2",
+    "@akromio/cli-defaults": "^0.1.2",
+    "@akromio/registry": "^0.1.2",
+    "@akromio/registry-uploader": "^0.0.0",
+    "@dogmalang/core": "^1.0.0-rc18.0",
+    "@skynetlabs/skynet-nodejs": "^2.9.0",
+    "dotenv": "^16.0.3",
+    "inquirer": "8.2.0",
+    "yargs": "^17.6.2"
+  },
+  "scripts": {
+    "local": "npm i -g",
+    "lint": "dogmac check src tests",
+    "build": "npm run build/src && npm run build/chmod",
+    "build/src": "rm -rf dist/ && dogmac js -o dist/cjs src && babel -d dist dist",
+    "build/chmod": "chmod u+x dist/cjs/apm.js",
+    "test": "npm run test/build && mocha --config .mocharc.yaml",
+    "test/build": "rm -rf ./__tests__ && dogmac js -o __tests__ tests && babel -d __tests__ __tests__",
+    "cov": "c8 mocha --config .mocharc.yaml"
+  }
+}

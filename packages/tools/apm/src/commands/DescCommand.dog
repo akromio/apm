@@ -1,0 +1,66 @@
+use (
+  dep://yaml
+  {Command} = alias://cli
+)
+
+/**
+ * The thing descriptions.
+ */
+const things = {
+  env =
+    desc = "The environment used by the tool."
+    observations = "
+      - The prefix used for the environment variables is KRM_,
+        Akromio without vowels.
+
+      - The .env file must be located in the $KRM_DIR_NAME.
+        The secrets and cryptographic keys should be saved in $KRM_PRIVATE_ENV_FILE.
+        If you don't want to load some of these files, set its environment variable to the empty string.
+
+        The $KRM_PRIVATE_ENV_FILE should contain secrets or private keys, make sure that this is in .gitignore.
+        The secrets and private keys shouldn't be commited to a Git repo.
+
+        Every variable have the following format: name=value or name=\"value\".
+        Comments: #comment to the end of the line.
+      
+      - You can list the environment with the command 'e' or 'env' of the tool.
+    "
+}
+
+/**
+ * The desc command.
+ */
+export struct DescCommand: Command
+  @override
+  pub const name := ["describe <thing>", "desc"]
+
+  @override
+  pub const desc := "Describe a thing on akro such as, for example, an operation."
+
+  @override
+  pub const options := {}
+
+  @override
+  pub const positionals := {
+    thing =
+      choices = keys(things)
+      desc = "Thing to describe."
+  }
+
+  @override
+  pub async proc handle(argv=> {thing})
+    if desc ::= things[thing] then
+      print("Name:", thing)
+      print("Description:", desc.desc)
+
+      if desc.def then
+        print("Definition:")
+        print(desc.def)
+      
+      if desc.observations then
+        print("Observations:")
+        print(desc.observations)
+
+      if desc.examples then
+        print("Examples:")
+        print(desc.examples)

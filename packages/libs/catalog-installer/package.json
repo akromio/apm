@@ -1,0 +1,50 @@
+{
+  "name": "@akromio/catalog-installer",
+  "version": "0.0.0",
+  "description": "Catalog installer for Akromio.",
+  "author": {
+    "name": "Sia Codelabs",
+    "email": "hello@siacodelabs.com",
+    "url": "https://siacodelabs.com"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/akromio/nodejs-apm/issues",
+    "email": "bugs@akromio.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akromio/nodejs-apm.git"
+  },
+  "preferGlobal": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/cjs/index.js",
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">= 14",
+    "npm": ">= 6"
+  },
+  "dependencies": {
+    "@dogmalang/core": "^1.0.0-rc18.0",
+    "fs-extra": "^10.1.0",
+    "yaml": "^2.1.3"
+  },
+  "devDependencies": {
+    "@akromio/dataset": "^0.1.2",
+    "@akromio/registry": "^0.1.2"
+  },
+  "scripts": {
+    "lint": "dogmac check src tests",
+    "build": "npm run build/src",
+    "build/src": "rm -rf dist/ && dogmac js -o dist/cjs src && babel -d dist dist",
+    "test": "npm run test/build && mocha --config .mocharc.yaml",
+    "test/build": "rm -rf ./__tests__ && dogmac js -o __tests__ tests && babel -d __tests__ __tests__",
+    "test/itg": "mocha --config .mocharc.itg.yaml",
+    "tests": "npm t && npm run test/itg",
+    "cov": "c8 mocha --config .mocharc.yaml"
+  }
+}

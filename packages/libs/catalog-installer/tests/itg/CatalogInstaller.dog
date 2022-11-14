@@ -1,0 +1,44 @@
+use (
+  dep://os
+  dep://path
+  alias://fsx
+  {Registries, RegistryStringParser, RegistryBuilder} = alias://registry
+  alias://expected
+  {CatalogInstaller} = ~
+)
+
+suite(__filename, proc()
+  const (
+    tmpDir = os.tmpdir()
+    apmPath = path.join(tmpDir, ".apm")
+    catalogPath = "/jobs/catalogs"
+    builder = RegistryBuilder()
+    parser = RegistryStringParser()
+    skylink = "0001fcabbl00ibtiq4bkhemh6hdh3rlskurki3rcn2ua658j04a0gp8"
+  )
+
+  suiteSetup(async proc()
+    await(fsx.remove(apmPath))
+  end)
+
+  test("if catalog and dependencies exist, catalog must be installed w/ dependencies", async proc()
+    # (1) act
+    const (
+      defaults = {skynet = {portal = "siasky.net"}}
+      registry = builder.create(parser.parse($"apm=skynet://${skylink}", defaults))
+      registries = await(Registries().appendRegistry(registry).connect())
+      installer = CatalogInstaller(registries=)
+      itemPath = "/jobs/catalogs/test.yaml"
+      installPath = path.join(apmPath, catalogPath)
+      out = await(installer.installCatalog(itemPath, installPath))
+    )
+
+    # (2) assessment
+    expected(out).equalTo(path.join(installPath, "test.yaml"))
+    expected.files(
+      out
+      path.join(installPath, "dir1/file.txt")
+      path.join(installPath, "dir2/file.txt")
+    ).toExist()
+  end)
+end)

@@ -1,0 +1,46 @@
+use (
+  {SkynetClient} = alias://skynet
+  {Command} = alias://cli
+)
+
+/**
+ * An get-entry command.
+ */
+export struct GetEntryCommand: Command
+  @override
+  pub const name := ["entry [publicKey] <dataKey>", "get-entry"]
+
+  @override
+  pub const desc := "Show an entry of the Skynet registry."
+
+  @override
+  pub const positionals := {
+    publicKey =
+      type = "string"
+      desc = "The public key."
+      default = $KRM_REGISTRY_SKYNET_PUBLIC_KEY
+    
+    dataKey =
+      type = "string"
+      desc = "The data key."
+  }
+
+  @override
+  pub const options := {}
+
+  @override @hidden
+  pub async proc handle(argv=> {publicKey, dataKey})
+    #(1) pre
+      if not publicKey then
+        print("Public key expected. Not passed and env var unset.")
+        ps.exit(1)
+
+    #(2) get entry
+    const (
+      portal = $KRM_REGISTRY_SKYNET_PORTAL 
+      skynet = native("new SkynetClient(portal)")
+      decoder = native("new TextDecoder()")
+      {entry} = await(skynet.registry.getEntry(publicKey, dataKey))
+    )
+    
+    printf(entry{*, data = decoder.decode(entry.data)})

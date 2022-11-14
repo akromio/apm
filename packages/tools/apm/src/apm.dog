@@ -1,0 +1,43 @@
+#!env
+
+use (
+  pkg = ../../package
+  env
+  {createCommands, handleErrors} = alias://cli
+  commands/{DescCommand, EnvCommand, InstallCommand}
+  commands/skynet/{UploadCommand, GenKeyPairCommand, GetEntryCommand, GetEntryLinkCommand}
+)
+
+const (
+  yargs = require("yargs")
+  appName = pkg.name.split("/")[-1]
+  {years} = pkg
+  author = pkg.author.name
+)
+
+yargs.scriptName(appName)
+yargs.version("v", pkg.version)
+yargs.help("help")
+yargs.epilogue(
+  $"Copyright © ${years} ${author}. All rights reserved.\nProduct of Spain, EU, made in Valencia."
+)
+yargs.fail(handleErrors)
+
+# commands
+const commands = [
+  DescCommand()
+  EnvCommand()
+  InstallCommand()
+  [
+    {name = "skynet", desc = "Perform operations on Skynet."}
+    GenKeyPairCommand()
+    GetEntryCommand()
+    GetEntryLinkCommand()
+    UploadCommand()
+  ]
+]
+
+createCommands(yargs, commands)
+
+# get args
+yargs.argv

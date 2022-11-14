@@ -1,0 +1,68 @@
+use (
+  dep://path
+  {CatalogInstaller} = alias://catalogInstaller
+  {RegistryCommandBase} = alias://cli
+)
+
+/**
+ * The options defined in the super types.
+ */
+const {baseOptions} = RegistryCommandBase
+
+/**
+ * An install command.
+ */
+export struct InstallCommand: RegistryCommandBase
+  @override
+  pub const name := ["install <catalogName>", "i"]
+
+  @override
+  pub const desc := "Install a catalog stored in a registry."
+
+  @override
+  pub const positionals := {
+    catalogName =
+      type = "string"
+      desc = "The catalog name to download and install."
+  }
+
+  @override
+  pub const options := {
+    {registries} = baseOptions
+
+    alias =
+      type = "string"
+      alias = ["a", "as"]
+      desc = "Name to set when installed if we want to change it."
+  }
+
+  @override
+  pub const defaults = {
+    skynet =
+      portal = $KRM_REGISTRY_SKYNET_PORTAL
+      skylink = $KRM_REGISTRY_SKYNET_SKYLINK
+  }
+
+  @override @hidden
+  pub async proc handle(argv=> {catalogName, alias})
+    #(1) create the registry instances to use
+    const registries = await(self.createRegistries(argv).connect())
+
+    #(2) add extension to catalogName if needed
+    if not path.extname(catalogName) then catalogName += ".yaml"
+
+    #(3) install
+    do
+      const (
+        installer = CatalogInstaller(registries=)
+        itemPath = path.join($KRM_JOB_CATALOGS_PATH, catalogName)
+        basePath = path.join(ps.workDir, $KRM_DIR_NAME, $KRM_APM_DIR_NAME, $KRM_JOB_CATALOGS_PATH)
+        installedPath = await(installer.installCatalog(itemPath, basePath, name = alias))
+      )
+
+      if installedPath then
+        print($"Catalog installed in '${installedPath}'.")
+      else
+        print($"Catalog '${itemPath}' not found in '${registries.registryNames}'.")
+    finally
+      await(registries.disconnect())

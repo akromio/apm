@@ -1,0 +1,23 @@
+use (
+  {SkynetClient} = alias://skynet
+  ../InternalConnector
+)
+
+/**
+ * A connector to upload registries.
+ */
+@impl(Connector)
+export struct SkynetConnector: InternalConnector
+  /**
+   * The Skynet client to use.
+   */
+  pub const client: SkynetClient
+
+  /**
+   * Uploads a local [dirPath] to the Skynet network,
+   * returns its Skylink.
+   *
+   * The directory to upload is considered as a full registry.
+   */
+  @async
+  pub fn uploadRegistry(dirPath: text) = self.client.uploadDirectory(dirPath)

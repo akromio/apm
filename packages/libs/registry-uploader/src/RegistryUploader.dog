@@ -1,0 +1,33 @@
+use (
+  Connector
+)
+
+/**
+ * A uploader of items to registry services.
+ */
+export struct RegistryUploader
+  /**
+   * The connector to use for this regitry.
+   */
+  pub const client: Connector
+
+  /**
+   * Opens a connection with the registry.
+   */
+  pub async fn connect() -> self
+    await(self.client.connect())
+  
+  /** 
+   * Closes the connection with the registry.
+   */
+  pub async fn disconnect() -> self
+    await(self.client.disconnect())
+  
+  /**
+   * Uploads a local [dirPath] as a registry.
+   */
+  @async
+  pub fn uploadRegistry(dirPath: text) = self.client.uploadRegistry(
+    dirPath
+  )
+    

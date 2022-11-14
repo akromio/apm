@@ -1,0 +1,95 @@
+use (
+  dep://yaml
+  dep://path
+  fs = dep://fs/promises
+  alias://fsx
+)
+
+/**
+ * A catalog installer, that is, an object to download catalogs
+ * saving them in the local filesystem.
+ *
+ * @dev
+ * The declaration of the catalogs must be got from a registry
+ * supporting the downloadItem() method.
+ */
+export struct CatalogInstaller
+  /**
+   * The registries to use for downloading the data.
+   */
+  pub const registries #: Registries
+
+  /**
+   * Downloads a catalog locally,
+   * returning the path where this has been saved.
+   *
+   * If item unexists, nil returned.
+   *
+   * The [itemPath] is the catalog path in the registry.
+   *
+   * The [basePath] sets the local filesystem path where the
+   * catalog and its dependencies must be saved such as,
+   * for example, the apmPath/catalogPath.
+   *
+   * If we need to save the catalog with another name,
+   * we can indicate it in [opts.name].
+   *
+   * If we want to set the registry to use, indicate it
+   * in [opts.registryName].
+   *
+   * @remarks
+   * Right now, the catalogs must be written in yaml.
+   */
+  pub async fn installCatalog(
+    itemPath: text
+    basePath: text
+    opts?: {name?: text, registryName?: text}
+  ) -> installPath: text
+    # (1) get catalog declaration
+    var (
+      item ::= await(self.registries.getItem(itemPath, opts))
+      decl
+    )
+
+    if not item then return
+
+    # (2) add install metadata
+    decl = yaml.parse(text(item.value)){
+      *
+      __installed = timestamp()
+      __registry = item.registryName
+      __path = item.name
+    }
+
+    # (3) save catalog declaration
+    const catalogName = opts?name or path.basename(itemPath)
+    installPath = path.join(basePath, catalogName)
+
+    await(fsx.ensureDir(path.dirname(installPath)))
+    await(fs.writeFile(installPath, yaml.stringify(decl), "utf8"))
+
+    # (4) download dependencies if defined
+    if decl.localDependencies is list then
+      await(self.installLocalDependencies(decl, path.dirname(installPath), item.registryName))
+
+  /**
+   * Install the local dependencies of a given catalog [decl]aration
+   * in a local [installPath].
+   *
+   * @dev
+   * Remember that the dependencies are local to the local catalog path.
+   */
+  @hidden
+  pub async proc installLocalDependencies(decl: map, installPath: text, registryName: text)
+    const (
+      basePath = path.dirname(decl.__path)
+      registry = self.registries.getRegistry(registryName)
+    )
+
+    for each dep: text in decl.localDependencies do
+      const (
+        itemPath = path.join(basePath, dep)
+        localPath = path.join(installPath, dep)
+      )
+
+      await(registry.downloadItem(itemPath, localPath, unzip = true, overwrite = true))

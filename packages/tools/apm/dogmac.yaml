@@ -1,0 +1,18 @@
+uses:
+  catalogInstaller:
+    js: "@akromio/catalog-installer"
+  
+  cli:
+    js: "@akromio/cli"
+  
+  defaults:
+    js: "@akromio/cli-defaults"
+  
+  registry:
+    js: "@akromio/registry"
+  
+  registryUploader:
+    js: "@akromio/registry-uploader"
+  
+  skynet:
+    js: "@skynetlabs/skynet-nodejs"

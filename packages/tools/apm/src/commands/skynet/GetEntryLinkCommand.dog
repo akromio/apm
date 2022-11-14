@@ -1,0 +1,39 @@
+use (
+  {getEntryLink} = alias://skynet
+  {Command} = alias://cli
+)
+
+/**
+ * An get-entry-link command.
+ */
+export struct GetLinkCommand: Command
+  @override
+  pub const name := ["link [publicKey] <dataKey>", "get-entry-link"]
+
+  @override
+  pub const desc := "Show the skylink for a Skynet registry entry."
+
+  @override
+  pub const positionals := {
+    publicKey =
+      type = "string"
+      desc = "The public key."
+      default = $KRM_REGISTRY_SKYNET_PUBLIC_KEY
+    
+    dataKey =
+      type = "string"
+      desc = "The data key."
+  }
+
+  @override
+  pub const options := {}
+
+  @override @hidden
+  pub async proc handle(argv=> {publicKey, dataKey})
+    #(1) pre
+    if not publicKey then
+      print("Public key expected. Not passed and env var unset.")
+      ps.exit(1)
+
+    #(2) get the entry link
+    print(getEntryLink(publicKey, dataKey))

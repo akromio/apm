@@ -1,0 +1,70 @@
+use (
+  dep://path
+  fs = dep://fs/promises
+  {genKeyPairFromSeed, genKeyPairAndSeed} = alias://skynet
+  {Command} = alias://cli
+)
+
+/**
+ * A genKeyPair command.
+ */
+export struct GenKeyPairCommand: Command
+  @override
+  pub const name := ["genKeyPair", "gkp"]
+
+  @override
+  pub const desc := "Generate a key pair."
+
+  @override
+  pub const positionals := {}
+
+  @override
+  pub const options := {
+    filePath =
+      type = "string"
+      alias = ["o", "out"]
+      desc = "File path where to save the key pair generated."
+      default = path.join($KRM_DIR_NAME, $KRM_PRIVATE_ENV_FILE)
+    
+    tty =
+      type = "boolean"
+      alias = ["t"]
+      desc = "Not to disk, show in the terminal."
+      default = false
+    
+    force =
+      type = "boolean"
+      alias = ["f"]
+      desc = "Overwrite out file if it exists."
+      default = false
+    
+    seed =
+      type = "string"
+      alias = ["s"]
+      desc = "The seed to use."
+  }
+
+  @override @hidden
+  pub async proc handle(argv=> {seed, filePath, force, tty})
+    #(1) generate key pair
+    const keyPair = if seed then
+      genKeyPairFromSeed(seed)
+    else
+      genKeyPairAndSeed()
+    end
+
+    #(2) serialize key pair  
+    var output = $"KRM_REGISTRY_SKYNET_PUBLIC_KEY=${keyPair.publicKey}\n"
+    output += $"KRM_REGISTRY_SKYNET_PRIVATE_KEY=${keyPair.privateKey}\n"
+    if keyPair.seed then output += $"#seed=${keyPair.seed}\n"
+
+    #(3) save key pair in disk if needed
+    if tty then
+      print(output)
+    else
+      if [ok] ::= pawait(fs.access(filePath)); ok and not force then
+        print($"File already exists: ${filePath}. Use -f or --force to overwrite it.")
+        ps.exit(1)
+      
+      await(fs.writeFile(filePath, output))
+      print($"Key pair generated and saved in '${filePath}'.")

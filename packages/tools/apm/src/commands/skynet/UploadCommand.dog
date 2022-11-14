@@ -1,0 +1,100 @@
+use (
+  dep://path
+  dep://inquirer
+  {SkynetClient} = alias://skynet
+  {RegistryUploaderBuilder} = alias://registryUploader
+  {RegistryCommandBase} = alias://cli
+)
+
+/**
+ * The options defined in the super types.
+ */
+const {baseOptions} = RegistryCommandBase
+
+/**
+ * An upload command.
+ */
+export struct UploadCommand: RegistryCommandBase
+  @override
+  pub const name := ["upload <dirPath>", "u"]
+
+  @override
+  pub const desc := "Upload a local directory, as a standalone registry, to Skynet."
+
+  @override
+  pub const positionals := {
+    dirPath =
+      type = "string"
+      desc = "The local dir path to upload."
+  }
+
+  @override
+  pub const options := {
+    yes =
+      type = "boolean"
+      alias = ["y"]
+      desc = "Respond yes to the confirmation."
+      default = false
+    
+    privateKey =
+      type = "string"
+      alias = ["k"]
+      desc = "The private key for updating the Skynet underlying registry entry."
+    
+    dataKey =
+      type = "string"
+      alias = ["d"]
+      desc = "The data key for updating the Skynet underlying registry entry."
+  }
+
+  @override
+  pub const defaults = {
+    skynet =
+      portal = $KRM_REGISTRY_SKYNET_PORTAL
+  }
+
+  @override @hidden
+  pub async proc handle(argv=> {dirPath, yes, privateKey, dataKey})
+    #(1) prepare dir
+    if dirPath == "." then
+      dirPath = ps.workDir
+
+    #(2) confirm
+    if not yes then
+      const q = [{
+        name = "yes"
+        'type' = "confirm"
+        message = $"Are you sure you like to upload '${dirPath}' to Skynet?"
+        default = false
+      }]
+
+      if not await(inquirer.prompt(q)).yes then
+        return
+    
+    #(3) upload
+    const (
+      portal = $KRM_REGISTRY_SKYNET_PORTAL 
+      uploader = RegistryUploaderBuilder().create('impl' = "skynet", portal)
+      skylink = await(uploader.uploadRegistry(dirPath))
+    )
+
+    print($"Registry created and uploaded. Skylink: '${skylink}'.")
+
+    #(4) update the Skynet registry if needed
+    if dataKey then
+      # private key
+      if not (privateKey ?= $KRM_REGISTRY_SKYNET_PRIVATE_KEY) then
+        print("Private key expected. Not passed and env variable unset.")
+        ps.exit(1)
+
+      # set entry
+      const skynet = native("new SkynetClient(portal)")
+      await(skynet.db.setDataLink(privateKey, dataKey, skylink))
+      print($"Skynet registry entry '${dataKey}' updated, linked to '${skylink}'.")
+  catch e
+    if e like "ENOENT: no such file or directory" then
+      print($"'${dirPath}' doesn't exist or can't be accessed.")
+    else
+      print(e)
+
+    ps.exit(1)

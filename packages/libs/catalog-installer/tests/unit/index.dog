@@ -1,0 +1,10 @@
+use (
+  alias://expected
+  pkg = ~
+)
+
+suite(__filename, proc()
+  test("when imported, api must be exported", proc()
+    expected(pkg).member("CatalogInstaller").toBeCallable()
+  end)
+end)

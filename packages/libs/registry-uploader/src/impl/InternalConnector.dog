@@ -1,0 +1,20 @@
+use (
+  dep://path
+)
+
+/**
+ * A base for the internal connectors.
+ */
+@abstract
+export struct InternalConnect
+  /**
+   * Connects to the file system.
+   */
+  @async
+  pub fn connect() -> self
+  
+  /**
+   * Disconnects from the file system.
+   */
+  @async
+  pub fn disconnect() -> self

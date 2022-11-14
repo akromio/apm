@@ -1,0 +1,12 @@
+uses:
+  doubles:
+    js: "@akromio/doubles"
+    
+  expected:
+    js: "@akromio/expected"
+  
+  fsx:
+    js: "fs-extra"
+  
+  registry:
+    js: "@akromio/registry"

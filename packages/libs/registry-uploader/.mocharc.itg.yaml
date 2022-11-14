@@ -1,0 +1,8 @@
+extension:
+  - js
+spec:
+  - __tests__/itg/**/*.js
+timeout: 3000
+ui: tdd
+ignore:
+  - "**/*/__init__.js"

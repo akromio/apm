@@ -1,0 +1,67 @@
+use (
+  dep://os
+  dep://path
+  alias://expected
+  {monitor, simulator, method} = alias://doubles
+  {Registries, Registry} = alias://registry
+  {CatalogInstaller} = ~
+)
+
+suite(__filename, proc()
+  const (
+    tmpDir = os.tmpdir()
+    apmPath = path.join(tmpDir, ".apm")
+    catalogPath = "/jobs/catalogs"
+    basePath = path.join(apmPath, catalogPath)
+  )
+
+  suite("installCatalog()", proc()
+    teardown(proc()
+      monitor.clearAll()
+    end)
+
+    test("when catalog unexists, nil must be returned", async proc()
+      # (1) act
+      const (
+        registries = simulator(Registries, getItem = method(resolves = nil))
+        installer = CatalogInstaller(registries=)
+        itemPath = "/empty.yaml"
+        out = await(installer.installCatalog(itemPath, basePath))
+      )
+
+      # (2) assessment
+      expected(out).toBeNil()
+    end)
+
+    test("when alias indicated, catalog must be installed with that name", async proc()
+      # (1) act
+      const (
+        declItem = {
+          registryName = "apm"
+          name = "/jobs/catalogs/empty.yaml"
+          uri = "apm:///jobs/catalogs/empty.yaml"
+          cty = "text/yaml"
+          value = """
+          spec: v1.0
+          desc: A test catalog.
+          jobs: []
+          """
+        }
+
+        getItem = monitor(method(resolves = declItem))
+        registries = simulator(Registries, getItem=)
+        installer = CatalogInstaller(registries=)
+        itemPath = "/jobs/catalogs/empty.yaml"
+        opts = {name = "alias.yaml"}
+        out = await(installer.installCatalog(itemPath, basePath, opts))
+      )
+    
+      # (2) assessment
+      expected(out).equalTo(path.join(basePath, "/alias.yaml"))
+      
+      const log = monitor.log(getItem)
+      expected(log.calls).equalTo(1)
+      expected(log.calledWith([itemPath, opts])).equalTo(1)
+    end)
+  end)
+end)

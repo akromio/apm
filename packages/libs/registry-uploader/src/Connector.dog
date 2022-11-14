@@ -1,0 +1,19 @@
+/**
+ * A connector, that is, an object to use
+ * upload to registries.
+ */
+export intf Connector
+  /**
+   * Connects the connector to its data source.
+   */
+  connect: func
+
+  /**
+   * Disconnects the connector from its data source.
+   */
+  disconnect: func
+
+  /**
+   * Uploads a full registry to a registry service.
+   */
+  uploadRegistry: func
